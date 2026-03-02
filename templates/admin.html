@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel | MarketPulse Pro{% endblock %}
+{% block content %}
+<div class="admin-page">
+    <header class="admin-header">
+        <h1>Admin Panel</h1>
+        <div>
+            <a class="btn-outline" href="/">Back to Dashboard</a>
+            <a class="btn-outline" href="/logout">Logout</a>
+        </div>
+    </header>
+
+    <section class="card">
+        <h3>Users</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email or "-" }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>{{ user.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h3>Latest Alert Logs</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Symbol</th>
+                    <th>Severity</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <td>{{ alert.created_at.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                    <td>{{ alert.symbol }}</td>
+                    <td>{{ alert.severity }}</td>
+                    <td>{{ alert.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+{% endblock %}

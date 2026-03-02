@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Register | MarketPulse Pro{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-panel">
+        <h1>MarketPulse Pro</h1>
+        <p>Build your watchlist, alerts, and sentiment feed</p>
+    </div>
+    <form class="auth-card" method="post" action="/register">
+        <h2>Create Account</h2>
+        <label>Username</label>
+        <input type="text" name="username" placeholder="Choose username" required>
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Optional">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Minimum 6 characters" required>
+        <button type="submit" class="btn-primary">Register</button>
+        <p class="auth-help">Already have an account? <a href="/login">Login</a></p>
+    </form>
+</div>
+{% endblock %}

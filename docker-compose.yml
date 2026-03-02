@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: marketpulse_app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/app
+
+  redis:
+    image: redis:7-alpine
+    container_name: marketpulse_redis
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:16-alpine
+    container_name: marketpulse_db
+    environment:
+      POSTGRES_DB: marketpulse
+      POSTGRES_USER: marketpulse
+      POSTGRES_PASSWORD: marketpulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:alpine
+    container_name: marketpulse_nginx
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  postgres_data:

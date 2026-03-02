@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | MarketPulse Pro{% endblock %}
+{% block content %}
+<div class="terminal-shell">
+    <header class="terminal-topbar">
+        <div class="terminal-brand">
+            <span class="brand-bars">|||</span>
+            <strong>MarketPulse Pro</strong>
+        </div>
+        <div class="terminal-controls">
+            <select id="symbol-select" class="mini-select">
+                {% for symbol in symbols %}
+                <option value="{{ symbol }}" {% if symbol == default_symbol %}selected{% endif %}>
+                    {{ symbol }}
+                </option>
+                {% endfor %}
+            </select>
+            <select id="timeframe-select" class="mini-select">
+                <option value="1m">1m</option>
+                <option value="5m">5m</option>
+                <option value="15m" selected>15m</option>
+                <option value="1h">1h</option>
+            </select>
+            <button id="btn-open-settings" class="top-btn">Indicators</button>
+            <button id="btn-open-trade" class="top-btn">Strategies</button>
+            <a href="/logout" class="top-btn logout-btn">Logout</a>
+            {% if user.role == "admin" %}
+            <a href="/admin" class="top-btn">Admin</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="terminal-body">
+        <aside class="tool-rail">
+            <button type="button" title="Reset Zoom" aria-label="Reset Zoom" data-tool="reset-zoom">&#8853;</button>
+            <button type="button" title="Copy Symbol + Price" aria-label="Copy Symbol + Price" data-tool="copy-symbol">&#128279;</button>
+            <button type="button" title="Cycle Timeframe" aria-label="Cycle Timeframe" data-tool="cycle-timeframe">&#9716;</button>
+            <button type="button" title="Reset Indicators" aria-label="Reset Indicators" data-tool="reset-indicators">&#9998;</button>
+            <button type="button" title="Open Portfolio" aria-label="Open Portfolio" data-tool="open-portfolio">&#128202;</button>
+            <button type="button" title="Open News" aria-label="Open News" data-tool="open-news">&#128240;</button>
+            <button type="button" title="Quick Alert" aria-label="Quick Alert" data-tool="quick-alert">&#128276;</button>
+            <button type="button" title="Reset Demo Account" aria-label="Reset Demo Account" data-tool="reset-demo">&#9881;</button>
+        </aside>
+
+        <main class="workspace">
+            <section class="chart-shell">
+                <div class="chart-header">
+                    <div>
+                        <h1 id="symbol-title">{{ default_symbol }}</h1>
+                        <p class="chart-sub">Welcome, {{ user.username }} | Cache: {{ "Redis" if is_redis_enabled else "Memory" }}</p>
+                    </div>
+                    <div class="chip-row">
+                        <span id="live-price-chip" class="price-chip">Connecting...</span>
+                        <span id="trend-chip" class="trend-chip">Trend: -</span>
+                    </div>
+                </div>
+                <div class="chart-toolbar">
+                    <div class="toolbar-left">
+                        <button class="tool-dot">+</button>
+                        <button class="tool-dot">/</button>
+                        <button class="tool-dot">o</button>
+                        <button class="tool-dot">*</button>
+                        <span id="chart-symbol-pill" class="symbol-pill">{{ default_symbol }}</span>
+                    </div>
+                    <div id="tool-status" class="toolbar-right">Live Terminal</div>
+                </div>
+                <div id="trading-chart"></div>
+            </section>
+
+            <section class="bottom-tabs-wrap">
+                <div class="bottom-tabs">
+                    <button class="tab-btn" data-tab="portfolio">Portfolio</button>
+                    <button class="tab-btn" data-tab="trade">Trade</button>
+                    <button class="tab-btn" data-tab="news">News</button>
+                    <button class="tab-btn" data-tab="settings">Settings</button>
+                </div>
+
+                <div id="panel-portfolio" class="tab-panel">
+                    <div class="portfolio-grid">
+                        <div class="mini-metric"><span>RSI</span><strong id="m-rsi">-</strong></div>
+                        <div class="mini-metric"><span>SMA</span><strong id="m-sma">-</strong></div>
+                        <div class="mini-metric"><span>EMA</span><strong id="m-ema">-</strong></div>
+                        <div class="mini-metric"><span>MACD</span><strong id="m-macd">-</strong></div>
+                        <div class="mini-metric prediction-card">
+                            <span>Prediction</span>
+                            <strong id="p-direction" class="prediction-main">-</strong>
+                            <div class="prediction-row">
+                                <span>Confidence</span>
+                                <strong id="p-confidence">-</strong>
+                            </div>
+                            <div class="confidence-track">
+                                <div id="p-confidence-fill" class="confidence-fill"></div>
+                            </div>
+                            <div class="prediction-grid">
+                                <div><span>Next Close</span><strong id="p-next-close">-</strong></div>
+                                <div><span>Signal</span><strong id="p-signal-strength">-</strong></div>
+                                <div><span>Model R2</span><strong id="p-model-r2">-</strong></div>
+                                <div><span>MAE</span><strong id="p-mae">-</strong></div>
+                            </div>
+                            <p id="p-action" class="prediction-action">Action: -</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-trade" class="tab-panel">
+                    <div class="trade-head-row">
+                        <strong>Trade</strong>
+                        <span>Demo account</span>
+                        <span id="paper-balance-chip">$10,000.00</span>
+                    </div>
+                    <div class="trade-workspace">
+                        <div class="trade-ticket">
+                            <div class="ticket-row">
+                                <span>Symbol</span>
+                                <input id="trade-symbol" type="text" readonly value="{{ default_symbol }}">
+                            </div>
+                            <div class="ticket-row">
+                                <span>Current Price</span>
+                                <strong id="trade-current-price">$0.00</strong>
+                            </div>
+                            <div class="ticket-row">
+                                <span>Quantity</span>
+                                <div class="qty-box">
+                                    <button id="qty-dec" type="button">-</button>
+                                    <input id="trade-qty" type="number" min="0.001" step="0.001" value="0.05">
+                                    <button id="qty-inc" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="practice-box">
+                                <h5>Beginner Assist</h5>
+                                <div class="practice-grid">
+                                    <label>Risk %</label>
+                                    <input id="practice-risk-pct" type="number" min="0.1" max="5" step="0.1" value="1.0">
+                                    <label>Stop Loss %</label>
+                                    <input id="practice-sl-pct" type="number" min="0.1" max="10" step="0.1" value="1.5">
+                                    <label>Take Profit %</label>
+                                    <input id="practice-tp-pct" type="number" min="0.1" max="30" step="0.1" value="3.0">
+                                </div>
+                                <div class="practice-metrics">
+                                    <span>R:R <strong id="rr-value">2.00</strong></span>
+                                    <span>Suggested Qty <strong id="recommended-qty">0.0000</strong></span>
+                                </div>
+                                <div class="practice-actions">
+                                    <button id="use-suggested-qty" type="button" class="btn-outline">Use Suggested Qty</button>
+                                    <label class="toggle"><input id="protected-mode" type="checkbox" checked>Auto SL/TP</label>
+                                </div>
+                                <p id="coach-msg" class="coach-msg">Use 1% risk and follow suggested qty for safer practice.</p>
+                            </div>
+                            <div class="ticket-row">
+                                <span>Investment</span>
+                                <strong id="trade-investment">$0.00</strong>
+                            </div>
+                            <div class="ticket-row">
+                                <span>P/L</span>
+                                <strong id="trade-pnl">$0.00</strong>
+                            </div>
+                            <div class="ticket-row">
+                                <span>Margin</span>
+                                <strong id="trade-margin">$0.00</strong>
+                            </div>
+                            <div class="trade-actions">
+                                <button id="btn-buy" class="action-buy">Buy</button>
+                                <button id="btn-sell" class="action-sell">Sell</button>
+                            </div>
+                        </div>
+                        <div class="positions-panel">
+                            <div class="positions-head">
+                                <h4>Current Positions</h4>
+                                <p id="position-text">Position: 0.000</p>
+                            </div>
+                            <div class="positions-table">
+                                <div>Qty</div>
+                                <div>Avg Entry</div>
+                                <div>Market</div>
+                                <div>P/L</div>
+                                <div id="pos-qty">0.0000</div>
+                                <div id="pos-entry">0.00</div>
+                                <div id="pos-market">0.00</div>
+                                <div id="pos-pnl">$0.00</div>
+                            </div>
+                            <div id="trade-mini-chart"></div>
+                            <div class="positions-footer">
+                                <span>Total Value</span>
+                                <strong id="pos-value">$0.00</strong>
+                            </div>
+                            <div class="positions-risk">
+                                <span>Stop Loss <strong id="pos-sl">-</strong></span>
+                                <span>Take Profit <strong id="pos-tp">-</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="journal-panel">
+                        <div class="positions-head">
+                            <h4>Practice Journal</h4>
+                            <p>Track entries, exits, and mistakes</p>
+                        </div>
+                        <ul id="trade-journal" class="journal-list"></ul>
+                    </div>
+                </div>
+
+                <div id="panel-news" class="tab-panel">
+                    <p id="news-label" class="news-headline">Market sentiment: Neutral</p>
+                    <ul id="news-list" class="news-list"></ul>
+                </div>
+
+                <div id="panel-settings" class="tab-panel">
+                    <div class="settings-grid">
+                        <div class="setting-row">
+                            <label>EMA Period</label>
+                            <input id="set-ema-period" type="number" min="5" max="100" value="20">
+                            <label class="toggle"><input id="set-ema-enabled" type="checkbox" checked>On</label>
+                        </div>
+                        <div class="setting-row">
+                            <label>SMA Period</label>
+                            <input id="set-sma-period" type="number" min="5" max="150" value="50">
+                            <label class="toggle"><input id="set-sma-enabled" type="checkbox" checked>On</label>
+                        </div>
+                        <div class="setting-row">
+                            <label>RSI Period</label>
+                            <input id="set-rsi-period" type="number" min="5" max="50" value="14">
+                            <label class="toggle"><input id="set-rsi-enabled" type="checkbox" checked>On</label>
+                        </div>
+                        <div class="setting-actions">
+                            <button id="save-settings" class="top-btn">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <aside class="market-sidebar">
+            <section class="side-card">
+                <h3>Watchlist</h3>
+                <ul id="watchlist-list" class="market-list">
+                    {% for symbol in watchlist %}
+                    <li data-symbol="{{ symbol }}">{{ symbol }} <span>--</span></li>
+                    {% endfor %}
+                </ul>
+                <button id="add-watch-btn" class="small-btn">+ Add Current</button>
+            </section>
+
+            <section class="side-card quick-trade-card">
+                <h3>Quick Trade</h3>
+                <div class="quick-line">
+                    <span>Price</span>
+                    <strong id="quick-price">$0.00</strong>
+                </div>
+                <div class="quick-line">
+                    <span>Demo Balance</span>
+                    <strong id="quick-balance">$10,000.00</strong>
+                </div>
+                <div class="quick-actions">
+                    <button id="quick-buy" class="action-buy">Buy</button>
+                    <button id="quick-sell" class="action-sell">Sell</button>
+                </div>
+            </section>
+
+            <section class="side-card">
+                <h3>Alerts</h3>
+                <select id="alert-type">
+                    <option value="price_above">Price Above</option>
+                    <option value="price_below">Price Below</option>
+                    <option value="rsi_overbought">RSI Overbought</option>
+                    <option value="rsi_oversold">RSI Oversold</option>
+                    <option value="breakout_up">Breakout Up</option>
+                </select>
+                <input id="alert-threshold" type="number" step="0.0001" placeholder="Threshold (for price rules)">
+                <button id="create-alert-btn" class="small-btn">Create Alert</button>
+                <ul id="alerts-log" class="alert-list"></ul>
+            </section>
+        </aside>
+    </div>
+</div>
+
+<script>
+window.MP = {
+    defaultSymbol: "{{ default_symbol }}",
+    supportedSymbols: {{ symbols | tojson }},
+    watchlist: {{ watchlist | tojson }},
+};
+</script>
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}
