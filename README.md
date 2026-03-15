@@ -13,6 +13,23 @@ Production-style crypto market intelligence platform with:
 - Historical candle storage for backtesting/analytics
 - Docker + Nginx + Postgres + Redis deployment files
 
+## Features
+- Live crypto stream
+- Technical indicators
+- Alerts
+- Machine learning prediction
+
+## 📸 Screenshots
+
+### Login Page
+![Login](login.png)
+
+### Dashboard
+![Dashboard](dashboard.png)
+
+### Trade Page
+![Trade](trade-page.png)
+
 ## Project Structure
 
 ```
