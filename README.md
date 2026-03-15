@@ -21,14 +21,17 @@ Production-style crypto market intelligence platform with:
 
 ## 📸 Screenshots
 
-### Login Page
-![Login](login.png)
+### 🔐 Login Page
+![Login](login.png.jpeg)
 
-### Dashboard
-![Dashboard](dashboard.png)
+### 📊 Dashboard
+![Dashboard](dashboard.png.jpeg)
 
-### Trade Page
-![Trade](trade-page.png)
+### 🛠 Admin Dashboard
+![Admin Dashboard](admin-dashboard.png.jpeg)
+
+### 💹 Trade Page
+![Trade Page](trade-page.png.jpeg)
 
 ## Project Structure
 
